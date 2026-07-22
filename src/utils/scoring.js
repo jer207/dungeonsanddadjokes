@@ -65,8 +65,9 @@ export function buildAchievements(players, availability, submissions) {
   badges[first.name] = { ...(badges[first.name] || {}), silverRing: true }
   banners.push({
     icon: 'silver',
+    who: [first.name],
     title: 'The Early Bird',
-    text: `${first.name} was first to answer the call. Silver-ringed for their initiative.`,
+    text: `First to answer the call. Silver-ringed for sheer initiative.`,
   })
 
   // Roster size: prefer the invited roster; fall back to who has submitted.
@@ -85,8 +86,9 @@ export function buildAchievements(players, availability, submissions) {
     }
     banners.push({
       icon: 'gold',
+      who: champions,
       title: champions.length > 1 ? 'The Generous Ones' : 'The Generous One',
-      text: `${listNames(champions)} offered the most days (${max}). Gold-bordered for flexibility.`,
+      text: `Offered the most days (${max}). Gold-bordered for flexibility.`,
     })
 
     // A gold + silver player earns a star.
@@ -99,8 +101,9 @@ export function buildAchievements(players, availability, submissions) {
     if (ordered.length > 1) {
       banners.push({
         icon: 'snail',
+        who: [last.name],
         title: 'Fashionably Late',
-        text: `${last.name} kept the party waiting. The tavern keeper is not impressed.`,
+        text: `Kept the whole party waiting. The tavern keeper is not impressed.`,
       })
     }
 
@@ -109,17 +112,12 @@ export function buildAchievements(players, availability, submissions) {
       const scrooges = [...counts.entries()].filter(([, v]) => v === min).map(([n]) => n)
       banners.push({
         icon: 'scroll',
+        who: scrooges,
         title: 'The Busy Adventurer',
-        text: `${listNames(scrooges)} offered the fewest days (${min}). Too much questing, not enough gaming?`,
+        text: `Offered the fewest days (${min}). Too much questing, not enough gaming?`,
       })
     }
   }
 
   return { badges, banners }
-}
-
-function listNames(names) {
-  if (names.length === 1) return names[0]
-  if (names.length === 2) return `${names[0]} and ${names[1]}`
-  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
 }

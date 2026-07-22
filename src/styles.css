@@ -485,47 +485,104 @@ button.cell:active:not(:disabled) {
   color: var(--maybe);
 }
 
-/* -------------------------------------------------------- achievements --- */
-.achievements {
-  margin: 4px 0 18px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgba(255, 207, 64, 0.06), transparent);
-}
-.achievements-title {
-  font-family: 'Patrick Hand SC', cursive;
-  font-size: 1.05rem;
-  color: var(--gold);
-  margin: 0 0 10px;
-  letter-spacing: 0.5px;
-}
-.achievement-list {
+/* --------------------------------------------------- achievement feed --- */
+.achievement-feed {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin: 4px 0 18px;
 }
-.achievement {
+.ach-card {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(100deg, rgba(255, 207, 64, 0.08), rgba(255, 207, 64, 0) 60%);
+  animation: ach-in 0.35s ease both;
 }
-.achievement-icon {
-  font-size: 1.5rem;
+@keyframes ach-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+/* colour the accent stripe per achievement type */
+.ach-silver {
+  border-left-color: var(--silver);
+  background: linear-gradient(100deg, rgba(207, 210, 218, 0.1), transparent 60%);
+}
+.ach-gold {
+  border-left-color: var(--gold);
+}
+.ach-snail {
+  border-left-color: var(--epic);
+  background: linear-gradient(100deg, rgba(163, 53, 238, 0.1), transparent 60%);
+}
+.ach-scroll {
+  border-left-color: var(--rare);
+  background: linear-gradient(100deg, rgba(0, 112, 221, 0.1), transparent 60%);
+}
+.ach-icon {
+  font-size: 1.7rem;
   flex-shrink: 0;
   width: 34px;
   text-align: center;
+  line-height: 1;
 }
-.achievement-name {
+.ach-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ach-unlock {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.ach-who {
+  color: var(--gold);
+}
+.ach-silver .ach-who {
+  color: var(--silver);
+}
+.ach-snail .ach-who {
+  color: #cbb0f0;
+}
+.ach-scroll .ach-who {
+  color: #8ec2ff;
+}
+.ach-title {
   font-family: 'Crimson Pro', serif;
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: 1.08rem;
+  color: var(--ink);
+  line-height: 1.2;
+  margin: 1px 0;
 }
-.achievement-text {
+.ach-text {
   font-family: 'Patrick Hand SC', cursive;
   font-size: 0.9rem;
   color: var(--ink-dim);
-  line-height: 1.35;
+  line-height: 1.3;
+}
+.ach-avatars {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+.ach-avatars .avatar {
+  margin-left: -6px;
+  box-shadow: 0 0 0 2px var(--bg-elev);
+}
+.ach-avatars .avatar:first-child {
+  margin-left: 0;
+}
+.app.dm-mode .ach-avatars .avatar {
+  box-shadow: 0 0 0 2px var(--dm-elev);
 }
 
 /* ---------------------------------------------------------- misc banners -- */

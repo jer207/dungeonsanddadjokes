@@ -129,7 +129,7 @@ export default function AdminSection({
             </div>
 
             <h3 className="section-subheading dm-heading">Player Responses</h3>
-            <Achievements banners={banners} />
+            <Achievements banners={banners} badges={badges} />
             {!anyResponses && <p className="empty-note">No responses yet.</p>}
             {anyResponses && (
               <ol className="results-list">

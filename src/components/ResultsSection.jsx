@@ -21,7 +21,7 @@ export default function ResultsSection({ results, badges, banners, disabled, tot
           Best nights float to the top. Tap a date to see who's in.
         </p>
 
-        <Achievements banners={banners} />
+        <Achievements banners={banners} badges={badges} />
 
         {!anyResponses && (
           <p className="empty-note">No votes counted yet. Be the first to answer the call!</p>
