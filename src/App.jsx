@@ -252,6 +252,7 @@ export default function App() {
         {!loading && !dmMode && (
           <>
             <NameSection
+              key={dmPending ? 'dm-name' : 'player-name'}
               players={data.players}
               name={name}
               onSubmit={handleNameSubmit}

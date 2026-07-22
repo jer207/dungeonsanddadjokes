@@ -3,26 +3,31 @@ import { isKnownPlayer, isDM } from '../utils/players.js'
 
 export default function NameSection({ players, name, onSubmit, locked, dmPending }) {
   const [value, setValue] = useState('')
-  const [warned, setWarned] = useState(false)
+  const [rejected, setRejected] = useState(false)
   const trimmed = value.trim()
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!trimmed) return
-    // Second step of the DM flow: they've typed "dm", now they name themselves.
+    // The DM's own name (step two of the DM flow) must be on the roster.
     if (dmPending) {
+      if (isKnownPlayer(trimmed, players)) {
+        onSubmit(trimmed)
+        return
+      }
+      setRejected(true)
+      return
+    }
+    // "dm" opens the Dungeon Master flow; any other name must be on the roster.
+    if (isDM(trimmed)) {
       onSubmit(trimmed)
       return
     }
-    if (isDM(trimmed) || isKnownPlayer(trimmed, players)) {
+    if (isKnownPlayer(trimmed, players)) {
       onSubmit(trimmed)
       return
     }
-    if (!warned) {
-      setWarned(true)
-      return
-    }
-    onSubmit(trimmed)
+    setRejected(true)
   }
 
   // Once a name is locked in, this section is just a welcome. Changing who you
@@ -41,33 +46,43 @@ export default function NameSection({ players, name, onSubmit, locked, dmPending
   return (
     <section className="section section-name" id="section-name">
       <div className="section-inner narrow">
-        <h2 className="section-heading">{dmPending ? 'Name yourself, Dungeon Master' : 'Who goes there?'}</h2>
+        <h2 className="section-heading">
+          {dmPending ? 'And your name, Dungeon Master?' : 'Who goes there?'}
+        </h2>
         <p className="help-text">
           {dmPending
-            ? 'The Sanctum knows its master. Which of the party do you play?'
+            ? 'You hold the Sanctum. Now name your own character so your ' +
+              'availability counts — type your name as it appears on the roster.'
             : 'Enter your name to begin your quest for a game night.'}
         </p>
-        <form onSubmit={handleSubmit} className="name-form">
+        <form onSubmit={handleSubmit} className="name-form" autoComplete="off">
           <input
             className="text-input name-input"
             type="text"
             value={value}
             onChange={(e) => {
               setValue(e.target.value)
-              if (warned) setWarned(false)
+              if (rejected) setRejected(false)
             }}
-            placeholder={dmPending ? 'Your name' : 'Your name'}
+            placeholder="Your name"
             aria-label="Your name"
+            name="adventurer"
             autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="words"
+            spellCheck={false}
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-form-type="other"
           />
-          {warned && !dmPending && (
+          {rejected && (
             <p className="help-text subtle">
-              Hmm, that name isn't on the guest list. Check your spelling if you expected to
-              be recognised — or tap again to continue anyway.
+              That name isn't on the roster. Check your spelling and type it exactly as
+              it appears — only invited adventurers may enter.
             </p>
           )}
           <button className="btn btn-primary" type="submit" disabled={!trimmed}>
-            {dmPending ? 'Enter the Sanctum' : warned ? 'Continue anyway' : 'Next'}
+            {dmPending ? 'Enter the Sanctum' : 'Next'}
           </button>
         </form>
       </div>
