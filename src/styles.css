@@ -1,0 +1,663 @@
+/* ===========================================================================
+   Dungeons & Dad Jokes — Group Scheduler
+   Mobile-first. Dark fantasy theme with RPG-rarity accent colours.
+   Fonts:
+     Cinzel Decorative (900)  -> h1 / title
+     Crimson Pro (600)        -> headlines
+     Crimson Pro (300)        -> body
+     Patrick Hand SC          -> quotes, accents, UI help text, tooltips
+   =========================================================================== */
+
+:root {
+  /* base */
+  --bg: #0e0b14;
+  --bg-elev: #171226;
+  --bg-elev-2: #1f1834;
+  --ink: #ece7f5;
+  --ink-dim: #b7aecb;
+  --ink-faint: #7d7391;
+  --line: #2c2440;
+
+  /* rarity accents */
+  --epic: #a335ee;
+  --rare: #0070dd;
+  --gold: #ffcf40;
+  --silver: #cfd2da;
+
+  /* availability */
+  --yes: #2fbf5b;
+  --yes-deep: #17612f;
+  --maybe: #ffd23f;
+  --maybe-deep: #6b5410;
+  --no: #4a4656;
+
+  /* month shades */
+  --shade-0: #232032;
+  --shade-1: #191725;
+
+  /* dm / evil */
+  --dm-bg: #16060a;
+  --dm-elev: #230a11;
+  --dm-line: #47121c;
+  --dm-crimson: #c1272d;
+  --dm-crimson-deep: #7d1119;
+
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 50% -10%, #1b1330 0%, var(--bg) 55%);
+  background-attachment: fixed;
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+/* --------------------------------------------------------------- header --- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  text-align: center;
+  padding: 14px 8px 12px;
+  background: rgba(14, 11, 20, 0.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  margin: 0 -16px 8px;
+}
+
+.app-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 6vw, 2.4rem);
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: 0.5px;
+  background: linear-gradient(180deg, #f4ecff 0%, var(--epic) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 18px rgba(163, 53, 238, 0.25);
+}
+
+.app-subtitle {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 1.05rem;
+  color: var(--ink-dim);
+  margin: 2px 0 0;
+  letter-spacing: 1px;
+}
+
+/* dm mode recolours the whole page a dark, evil red */
+.app.dm-mode {
+  /* handled via body class below */
+}
+.app.dm-mode ~ * {
+}
+
+/* ----------------------------------------------------------- structure --- */
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 8px;
+}
+
+.section {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  scroll-margin-top: 92px;
+  overflow: hidden;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.section-inner {
+  padding: 22px 18px 26px;
+}
+.section-inner.narrow {
+  max-width: 440px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.section-locked {
+  opacity: 0.42;
+  filter: grayscale(0.7);
+  pointer-events: none;
+  user-select: none;
+}
+
+.section-heading {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+.section-subheading {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin: 22px 0 8px;
+  color: var(--ink);
+}
+
+.help-text {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 1.02rem;
+  color: var(--ink-dim);
+  margin: 0 0 14px;
+  letter-spacing: 0.3px;
+}
+.help-text.subtle {
+  color: var(--ink-faint);
+  font-size: 0.92rem;
+}
+
+.empty-note {
+  font-family: 'Patrick Hand SC', cursive;
+  color: var(--ink-faint);
+  text-align: center;
+  padding: 18px 6px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+
+/* --------------------------------------------------------------- forms --- */
+.text-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.05rem;
+  color: var(--ink);
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.text-input:focus {
+  border-color: var(--epic);
+  box-shadow: 0 0 0 3px rgba(163, 53, 238, 0.25);
+}
+.name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.name-input {
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.btn {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  padding: 12px 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.08s ease, box-shadow 0.2s ease, opacity 0.2s;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: linear-gradient(180deg, var(--epic), #7b25b8);
+  box-shadow: 0 4px 16px rgba(163, 53, 238, 0.35);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(163, 53, 238, 0.5);
+}
+.btn-submit {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* chips inline in help text */
+.chip {
+  display: inline-block;
+  padding: 0 7px;
+  border-radius: 20px;
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #0e0b14;
+}
+.chip-yes {
+  background: var(--yes);
+}
+.chip-maybe {
+  background: var(--maybe);
+}
+.chip-no {
+  background: var(--no);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------ calendar --- */
+.calendar {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  user-select: none;
+}
+.calendar-head,
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.calendar-weekday {
+  text-align: center;
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  padding: 7px 0;
+  background: var(--bg-elev-2);
+  border-bottom: 1px solid var(--line);
+}
+.cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 0.5px solid rgba(0, 0, 0, 0.35);
+  background: var(--shade-0);
+  color: var(--ink-dim);
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px 5px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease;
+}
+button.cell:hover:not(:disabled) {
+  filter: brightness(1.25);
+}
+button.cell:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.cell.shade-0 {
+  background: var(--shade-0);
+}
+.cell.shade-1 {
+  background: var(--shade-1);
+}
+.cell-empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+.cell-date {
+  position: relative;
+  z-index: 2;
+  opacity: 0.85;
+}
+.cell-mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  z-index: 1;
+}
+.cell-yes {
+  background: var(--yes) !important;
+  color: #06210f;
+}
+.cell-yes .cell-mark {
+  color: #06210f;
+}
+.cell-maybe {
+  background: var(--maybe) !important;
+  color: #3a2c04;
+}
+.cell-maybe .cell-mark {
+  color: #3a2c04;
+}
+.calendar-readonly .cell {
+  cursor: default;
+}
+
+/* ------------------------------------------------------------- results --- */
+.results-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.result-row {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.result-row.open {
+  border-color: var(--epic);
+}
+.result-summary {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.result-summary.static {
+  cursor: default;
+}
+.result-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.result-date {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+.result-count {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.86rem;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.progress {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--no);
+}
+.seg {
+  height: 100%;
+  display: block;
+}
+.seg-yes {
+  background: var(--yes);
+}
+.seg-maybe {
+  background: var(--maybe);
+}
+.seg-no {
+  background: var(--no);
+}
+
+.result-avatars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.result-detail {
+  padding: 4px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+}
+.detail-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 10px;
+}
+
+/* --------------------------------------------------------------- avatar --- */
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.avatar-star {
+  position: absolute;
+  top: -46%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--gold);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+}
+.avatar-row-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.avatar-name {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+.maybe-tag {
+  font-family: 'Patrick Hand SC', cursive;
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--maybe);
+}
+
+/* -------------------------------------------------------- achievements --- */
+.achievements {
+  margin: 4px 0 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(255, 207, 64, 0.06), transparent);
+}
+.achievements-title {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 1.05rem;
+  color: var(--gold);
+  margin: 0 0 10px;
+  letter-spacing: 0.5px;
+}
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.achievement {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.achievement-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 34px;
+  text-align: center;
+}
+.achievement-name {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+.achievement-text {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+  line-height: 1.35;
+}
+
+/* ---------------------------------------------------------- misc banners -- */
+.demo-banner {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #ffe6a3;
+  background: rgba(255, 207, 64, 0.1);
+  border: 1px solid rgba(255, 207, 64, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 6px 0 0;
+}
+.demo-banner code {
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+}
+.error-banner {
+  font-family: 'Patrick Hand SC', cursive;
+  text-align: center;
+  color: #ffb4b4;
+  background: rgba(193, 39, 45, 0.15);
+  border: 1px solid rgba(193, 39, 45, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.loading {
+  font-family: 'Patrick Hand SC', cursive;
+  text-align: center;
+  color: var(--ink-dim);
+  padding: 30px 0;
+}
+
+.app-footer {
+  text-align: center;
+  margin-top: 26px;
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.9rem;
+  color: var(--ink-faint);
+}
+
+/* ============================================================= DM MODE === */
+/* Slightly darker, more evil vibe: near-black-red background, crimson buttons */
+.app.dm-mode {
+  color: #f0dede;
+}
+body:has(.app.dm-mode) {
+  background: var(--dm-bg);
+  background-image: radial-gradient(circle at 50% -10%, #350a10 0%, var(--dm-bg) 55%);
+}
+.app.dm-mode .app-header {
+  background: rgba(22, 6, 10, 0.85);
+  border-bottom-color: var(--dm-line);
+}
+.app.dm-mode .app-title {
+  background: linear-gradient(180deg, #ffe9e9 0%, var(--dm-crimson) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 18px rgba(193, 39, 45, 0.3);
+}
+.app.dm-mode .section {
+  background: var(--dm-elev);
+  border-color: var(--dm-line);
+}
+.app.dm-mode .text-input {
+  background: #2a0b12;
+  border-color: var(--dm-line);
+  color: #f4e2e2;
+}
+.app.dm-mode .text-input:focus {
+  border-color: var(--dm-crimson);
+  box-shadow: 0 0 0 3px rgba(193, 39, 45, 0.25);
+}
+.app.dm-mode .result-row {
+  background: #2a0b12;
+  border-color: var(--dm-line);
+}
+.app.dm-mode .calendar-weekday {
+  background: #2a0b12;
+}
+
+.btn-dm {
+  background: linear-gradient(180deg, var(--dm-crimson), var(--dm-crimson-deep));
+  box-shadow: 0 4px 16px rgba(193, 39, 45, 0.4);
+}
+.btn-dm:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(193, 39, 45, 0.6);
+}
+.btn-purge {
+  letter-spacing: 1px;
+}
+.dm-heading {
+  color: #ffcccc;
+  font-family: 'Cinzel Decorative', serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.dm-help {
+  color: #d8a5a5;
+}
+.dm-controls {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--dm-line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+.dm-range {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0 16px;
+  flex-wrap: wrap;
+}
+.dm-field {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.9rem;
+  color: #d8a5a5;
+}
+
+/* --------------------------------------------------------- larger screens */
+@media (min-width: 620px) {
+  .section-inner {
+    padding: 26px 26px 30px;
+  }
+  .cell {
+    font-size: 0.82rem;
+  }
+}
