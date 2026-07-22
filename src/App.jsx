@@ -6,9 +6,10 @@ import ResultsSection from './components/ResultsSection.jsx'
 import AdminSection from './components/AdminSection.jsx'
 import { getState, submitAvailability, setDateRange, purge } from './api.js'
 import { isConfigured } from './config.js'
-import { resolveName, isDM } from './utils/players.js'
+import { resolveName, isDM, buildAvatarMap } from './utils/players.js'
 import { dateRange } from './utils/dates.js'
 import { buildResults, buildAchievements } from './utils/scoring.js'
+import { AvatarContext } from './components/AvatarContext.js'
 
 export default function App() {
   const [loading, setLoading] = useState(true)
@@ -65,6 +66,16 @@ export default function App() {
     () => buildAchievements(data.players, data.availability, data.submissions),
     [data.players, data.availability, data.submissions],
   )
+
+  // One unique avatar per known name (roster + anyone who has responded).
+  const avatarMap = useMemo(() => {
+    const names = [
+      ...data.players.map((p) => p.name),
+      ...data.submissions.map((s) => s.name),
+      ...data.availability.map((a) => a.name),
+    ]
+    return buildAvatarMap(names)
+  }, [data.players, data.submissions, data.availability])
 
   function scrollToSection(id) {
     // let the DOM settle first
@@ -164,6 +175,7 @@ export default function App() {
   const totalPlayers = data.players.length
 
   return (
+    <AvatarContext.Provider value={avatarMap}>
     <div className={`app ${dmMode ? 'dm-mode' : ''}`}>
       <Header />
 
@@ -236,5 +248,6 @@ export default function App() {
         <span>May your rolls be ever in your favour.</span>
       </footer>
     </div>
+    </AvatarContext.Provider>
   )
 }

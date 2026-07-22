@@ -37,7 +37,7 @@ function hash(str) {
   return Math.abs(h)
 }
 
-// RPG rarity-inspired palette.
+// RPG rarity-inspired palette (8 hues → plenty for a party).
 const AVATAR_COLORS = [
   '#a335ee', // epic purple
   '#0070dd', // rare blue
@@ -49,14 +49,42 @@ const AVATAR_COLORS = [
   '#7d5fff', // arcane
 ]
 
-export const GLYPHS = ['shield', 'sword', 'axe', 'bow', 'staff', 'potion', 'helm', 'dagger']
+import { ICON_NAMES } from './icons.js'
 
+// Fallback avatar for a name not present in the assigned map.
 export function avatarFor(name) {
   const h = hash(norm(name))
   return {
     color: AVATAR_COLORS[h % AVATAR_COLORS.length],
-    glyph: GLYPHS[h % GLYPHS.length],
+    icon: ICON_NAMES[h % ICON_NAMES.length],
   }
+}
+
+// Assign every name a UNIQUE (colour, icon) pair. Colours are handed out
+// distinctly first (so small parties never share a colour); icons are picked
+// pseudo-randomly from the name's hash. If a pair would collide, we probe for
+// the next free one, guaranteeing no two players look alike.
+export function buildAvatarMap(names) {
+  const unique = [...new Set(names.filter(Boolean))].sort((a, b) => a.localeCompare(b))
+  const nColors = AVATAR_COLORS.length
+  const nIcons = ICON_NAMES.length
+  const usedPairs = new Set()
+  const map = {}
+
+  unique.forEach((name, k) => {
+    let colorIdx = k % nColors // distinct colours until we run out
+    let iconIdx = hash(norm(name)) % nIcons
+    let guard = 0
+    while (usedPairs.has(`${colorIdx}|${iconIdx}`) && guard < nColors * nIcons) {
+      iconIdx = (iconIdx + 1) % nIcons
+      if (iconIdx === hash(norm(name)) % nIcons) colorIdx = (colorIdx + 1) % nColors
+      guard++
+    }
+    usedPairs.add(`${colorIdx}|${iconIdx}`)
+    map[name] = { color: AVATAR_COLORS[colorIdx], icon: ICON_NAMES[iconIdx] }
+  })
+
+  return map
 }
 
 export function initials(name) {

@@ -23,20 +23,20 @@
   src: url('./fonts/cinzel-decorative-latin-900-normal.woff2') format('woff2');
 }
 
-/* Crimson Pro — body (300) + headlines (600) */
+/* Nunito Sans — body/UI (300) + headlines (700) */
 @font-face {
-  font-family: 'Crimson Pro';
+  font-family: 'Nunito Sans';
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url('./fonts/crimson-pro-latin-300-normal.woff2') format('woff2');
+  src: url('./fonts/nunito-sans-latin-300-normal.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Crimson Pro';
+  font-family: 'Nunito Sans';
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
   font-display: swap;
-  src: url('./fonts/crimson-pro-latin-600-normal.woff2') format('woff2');
+  src: url('./fonts/nunito-sans-latin-700-normal.woff2') format('woff2');
 }
 
 /* Patrick Hand SC — accents, quotes, tooltips (400) */

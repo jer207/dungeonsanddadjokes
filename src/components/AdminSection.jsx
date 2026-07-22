@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ProgressBar from './ProgressBar.jsx'
 import ProfileIcon from './ProfileIcon.jsx'
 import Achievements from './Achievements.jsx'
+import ConfirmDialog from './ConfirmDialog.jsx'
 import {
   toWeeks,
   shortLabel,
@@ -26,26 +27,22 @@ export default function AdminSection({
   const hasRange = !!(config.startDate && config.endDate)
   const [start, setStart] = useState(config.startDate || '')
   const [end, setEnd] = useState(config.endDate || '')
+  const [rangeError, setRangeError] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const weeks = toWeeks(dates)
   const labels = weekdayLabels()
 
   function handleSave() {
-    if (!start || !end) return
-    if (end < start) {
-      alert('The end date must fall on or after the start date.')
+    if (!start || !end) {
+      setRangeError('Pick both a start and an end date.')
       return
     }
-    onSaveRange(start, end)
-  }
-
-  function handlePurge() {
-    if (
-      confirm(
-        'Purge the calendar and every player response? This cannot be undone.',
-      )
-    ) {
-      onPurge()
+    if (end < start) {
+      setRangeError('The end date must fall on or after the start date.')
+      return
     }
+    setRangeError('')
+    onSaveRange(start, end)
   }
 
   const anyResponses = results.some((r) => r.yesCount + r.maybeCount > 0)
@@ -56,9 +53,9 @@ export default function AdminSection({
         <h2 className="section-heading dm-heading">Dungeon Master's Sanctum</h2>
         <p className="help-text dm-help">Bend the calendar to your will, dark one.</p>
 
-        <div className="dm-controls">
-          {!hasRange ? (
-            <>
+        {!hasRange ? (
+          <>
+            <div className="dm-controls">
               <p className="help-text">
                 Set the window of dates your players will see, then conjure the calendar.
               </p>
@@ -82,29 +79,22 @@ export default function AdminSection({
                   />
                 </label>
               </div>
-              <button className="btn btn-dm" type="button" onClick={handleSave} disabled={busy}>
-                {busy ? 'Conjuring…' : 'Conjure the Calendar'}
-              </button>
-            </>
-          ) : (
-            <>
+              {rangeError && <p className="inline-error">{rangeError}</p>}
+            </div>
+            <button className="btn btn-dm" type="button" onClick={handleSave} disabled={busy}>
+              {busy ? 'Conjuring…' : 'Conjure the Calendar'}
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="dm-controls">
               <p className="help-text">
                 Calendar is live from <strong>{prettyDate(config.startDate)}</strong> to{' '}
                 <strong>{prettyDate(config.endDate)}</strong>.{' '}
                 {submissions.length} player{submissions.length === 1 ? '' : 's'} have answered.
               </p>
-              <button className="btn btn-dm btn-purge" type="button" onClick={handlePurge} disabled={busy}>
-                {busy ? 'Purging…' : 'Purge'}
-              </button>
-              <p className="help-text subtle">
-                Purge wipes the date range and every player response back to a blank slate.
-              </p>
-            </>
-          )}
-        </div>
+            </div>
 
-        {hasRange && (
-          <>
             <button
               className="btn btn-dm btn-join"
               type="button"
@@ -113,6 +103,22 @@ export default function AdminSection({
               Add my own availability as a player →
             </button>
 
+            <button
+              className="btn btn-dm btn-purge"
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              disabled={busy}
+            >
+              {busy ? 'Purging…' : 'Purge'}
+            </button>
+            <p className="help-text subtle purge-note">
+              Purge wipes the date range and every player response back to a blank slate.
+            </p>
+          </>
+        )}
+
+        {hasRange && (
+          <>
             <h3 className="section-subheading dm-heading">The Calendar</h3>
             <div className="calendar calendar-readonly" role="grid">
               <div className="calendar-head" role="row">
@@ -185,6 +191,19 @@ export default function AdminSection({
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Lolth says"
+        message="Purge the calendar and every player response? A bold move that cannot be undone."
+        confirmLabel="DO IT"
+        cancelLabel="Spare them"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          onPurge()
+        }}
+      />
     </section>
   )
 }
