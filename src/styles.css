@@ -259,6 +259,19 @@ body {
   text-align: center;
   font-size: 1.2rem;
 }
+/* contenteditable name field: behaves like a single-line input but is not a
+   form control, so the browser's autofill accessory never appears */
+.name-editable {
+  white-space: nowrap;
+  overflow-x: auto;
+  cursor: text;
+  min-height: 1.55em;
+}
+.name-editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
 
 .btn {
   font-family: 'Nunito Sans', system-ui, sans-serif;

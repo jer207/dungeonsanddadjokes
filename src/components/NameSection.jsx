@@ -4,14 +4,9 @@ import { isKnownPlayer, isDM } from '../utils/players.js'
 export default function NameSection({ players, name, onSubmit, locked, dmPending }) {
   const [value, setValue] = useState('')
   const [rejected, setRejected] = useState(false)
-  // The field starts read-only so the browser never classifies it as a
-  // login/address/payment field and pops its autofill bar. The first focus
-  // makes it editable (and opens the keyboard) before any keystroke.
-  const [editable, setEditable] = useState(false)
   const trimmed = value.trim()
 
-  function handleSubmit(e) {
-    e.preventDefault()
+  function submit() {
     if (!trimmed) return
     // The DM's own name (step two of the DM flow) must be on the roster.
     if (dmPending) {
@@ -23,11 +18,7 @@ export default function NameSection({ players, name, onSubmit, locked, dmPending
       return
     }
     // "dm" opens the Dungeon Master flow; any other name must be on the roster.
-    if (isDM(trimmed)) {
-      onSubmit(trimmed)
-      return
-    }
-    if (isKnownPlayer(trimmed, players)) {
+    if (isDM(trimmed) || isKnownPlayer(trimmed, players)) {
       onSubmit(trimmed)
       return
     }
@@ -59,31 +50,42 @@ export default function NameSection({ players, name, onSubmit, locked, dmPending
               'availability counts — type your name as it appears on the roster.'
             : 'Enter your name to begin your quest for a game night.'}
         </p>
-        <form onSubmit={handleSubmit} className="name-form" autoComplete="off">
-          <input
-            className="text-input name-input"
-            type="text"
-            value={value}
-            readOnly={!editable}
-            onFocus={(e) => {
-              e.currentTarget.removeAttribute('readonly')
-              setEditable(true)
-            }}
-            onChange={(e) => {
-              setValue(e.target.value)
-              if (rejected) setRejected(false)
-            }}
-            placeholder="e.g. Jim"
+        <form
+          className="name-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            submit()
+          }}
+        >
+          {/* A contenteditable div, not an <input>, so mobile browsers never
+              treat it as a login/address/payment field and pop the autofill
+              bar. Uncontrolled: we read it on input and never write back, so
+              the caret never jumps. */}
+          <div
+            className="text-input name-input name-editable"
+            contentEditable
+            role="textbox"
             aria-label="Your name"
-            name="adventurer"
-            inputMode="text"
-            autoComplete="off"
+            data-placeholder="e.g. Jim"
+            spellCheck={false}
             autoCorrect="off"
             autoCapitalize="words"
-            spellCheck={false}
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-form-type="other"
+            suppressContentEditableWarning
+            onInput={(e) => {
+              setValue(e.currentTarget.textContent || '')
+              if (rejected) setRejected(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                submit()
+              }
+            }}
+            onPaste={(e) => {
+              e.preventDefault()
+              const text = (e.clipboardData || window.clipboardData).getData('text')
+              document.execCommand('insertText', false, text.replace(/\s+/g, ' '))
+            }}
           />
           {rejected && (
             <p className="help-text subtle">
