@@ -11,7 +11,7 @@
 //  shared between people or devices.
 // ---------------------------------------------------------------------------
 
-export const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDsWhuT5_0ZLz1OoKltZA3fp-JRozJsKLzEjdT_LcQvTF9RZLaVlXfkTdvRzGwHdEwrg/exec'
+export const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwUgNwI6LnrIFBI67x1gEP6NOteROE_Tp0_q0r7rTP-biSTQZ9ptlMFQTQTtd4pL_MlVQ/exec'
 
 // The name(s) that unlock the Dungeon Master control panel. Not case sensitive.
 export const DM_NAMES = ['dm']
