@@ -73,6 +73,10 @@ export default function App() {
     [data.players, data.availability, data.submissions, data.config],
   )
 
+  // The seen-log is scoped to the current calendar's summon time, so a fresh
+  // calendar re-pops achievements on every device.
+  const epoch = data.config.summonedAt || null
+
   // Queue any not-yet-seen achievements for the logged-in player as pop-up
   // modals. Runs on login and after each refresh (e.g. once a submission lands,
   // or when an end-of-round badge resolves). DM-in-Sanctum sees none — personal
@@ -82,13 +86,13 @@ export default function App() {
       setModalQueue([])
       return
     }
-    const seen = getSeen(name)
+    const seen = getSeen(name, epoch)
     setModalQueue(banners.filter((b) => b.who.includes(name) && !seen.has(b.id)))
-  }, [nameDone, dmMode, dmPending, name, banners])
+  }, [nameDone, dmMode, dmPending, name, banners, epoch])
 
   function dismissModal() {
     const cur = modalQueue[0]
-    if (cur) markSeen(name, cur.id)
+    if (cur) markSeen(name, cur.id, epoch)
     setModalQueue((q) => q.slice(1))
   }
 
@@ -119,6 +123,18 @@ export default function App() {
       setName(canonical) // the DM's own player identity, used when they join
       setNameDone(true)
       scrollToSection('section-admin')
+      // Backfill DMName on an already-live calendar so achievements can tell
+      // who the DM is. setDateRange only rewrites Config — it preserves
+      // SummonedAt and every player's response, so no data is lost.
+      if (
+        data.config.startDate &&
+        data.config.endDate &&
+        data.config.dmName !== canonical
+      ) {
+        setDateRange(data.config.startDate, data.config.endDate, canonical)
+          .then(refresh)
+          .catch(() => {})
+      }
       return
     }
     // Step one: the "dm" keyword opens DM mode but first asks for a name.

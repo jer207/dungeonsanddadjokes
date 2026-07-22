@@ -1,10 +1,14 @@
-// Remembers which achievement modals a given person has already dismissed, so
-// each one pops exactly once. Keyed by canonical name in localStorage — per
-// device, which suits a friends' scheduler where everyone uses their own phone.
+// Remembers which achievement modals a person has already dismissed, so each
+// pops exactly once. Stored in localStorage (per device — everyone uses their
+// own phone) and SCOPED to the calendar's summon timestamp (the "epoch").
+//
+// Scoping by epoch is what lets a Purge reset the modals for everyone without
+// reaching their devices: the next Conjure stamps a new SummonedAt, the epoch
+// changes, and every device quietly forgets the old dismissals.
 
-const KEY = 'dnd-seen-achievements-v1'
+const KEY = 'dnd-seen-achievements-v2'
 
-function readAll() {
+function read() {
   try {
     return JSON.parse(localStorage.getItem(KEY)) || {}
   } catch (e) {
@@ -12,20 +16,30 @@ function readAll() {
   }
 }
 
-// The set of achievement ids this person has already seen.
-export function getSeen(name) {
-  return new Set(readAll()[name] || [])
-}
-
-// Mark one achievement id as seen for this person.
-export function markSeen(name, id) {
-  const all = readAll()
-  const set = new Set(all[name] || [])
-  set.add(id)
-  all[name] = [...set]
+function write(store) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(all))
+    localStorage.setItem(KEY, JSON.stringify(store))
   } catch (e) {
     /* ignore quota / private-mode errors */
   }
+}
+
+// Return the store for the current epoch, discarding any older epoch's data.
+function scoped(epoch) {
+  const store = read()
+  if (store.epoch !== epoch) return { epoch, byName: {} }
+  return store
+}
+
+export function getSeen(name, epoch) {
+  return new Set(scoped(epoch).byName[name] || [])
+}
+
+export function markSeen(name, id, epoch) {
+  const store = scoped(epoch)
+  const set = new Set(store.byName[name] || [])
+  set.add(id)
+  store.byName[name] = [...set]
+  store.epoch = epoch
+  write(store)
 }
