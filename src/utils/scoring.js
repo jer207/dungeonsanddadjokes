@@ -8,6 +8,21 @@ function isWeekend(iso) {
   return dow === 0 || dow === 5 || dow === 6
 }
 
+// Every achievement that exists, honors first then gags. Used to show which
+// ones remain locked. `hint` says how to earn it, in general terms (no names).
+export const ACHIEVEMENT_CATALOG = [
+  { id: 'early-bird', icon: '🐦', title: 'The Early Bird', tone: 'honor', hint: 'Be the first player to answer the call.' },
+  { id: 'weekend-warrior', icon: '⚔️', title: 'Weekend Warrior', tone: 'honor', hint: 'Offer only weekend days — Fri, Sat, Sun.' },
+  { id: 'swift-raven', icon: '⚡', title: 'Swift Raven', tone: 'honor', hint: 'Answer within a day of the calendar being summoned.' },
+  { id: 'generous', icon: '🏆', title: 'The Generous One', tone: 'honor', hint: 'Offer the most days once the whole party is in.' },
+  { id: 'master-sniper', icon: '🎯', title: 'Master Sniper', tone: 'gag', hint: 'Be the DM who submits before any player.' },
+  { id: 'fence-sitter', icon: '🤷', title: 'The Fence-Sitter', tone: 'gag', hint: 'Mark more maybes than yeses.' },
+  { id: 'contrarian', icon: '🗓️', title: 'The Contrarian', tone: 'gag', hint: 'Offer days, but not a single weekend.' },
+  { id: 'lone-wolf', icon: '🐺', title: 'The Lone Wolf', tone: 'gag', hint: 'Offer only days nobody else picks (once all are in).' },
+  { id: 'fashionably-late', icon: '🐌', title: 'Fashionably Late', tone: 'gag', hint: 'Be the last of the party to submit.' },
+  { id: 'busy-adventurer', icon: '📜', title: 'The Busy Adventurer', tone: 'gag', hint: 'Offer the fewest days once everyone is in.' },
+]
+
 // Build the ranked results for the calendar dates.
 //   dates        : ordered array of ISO dates currently in the calendar
 //   availability : [ { name, date, status } ]  (status = 'yes' | 'maybe')

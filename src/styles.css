@@ -602,8 +602,73 @@ button.cell:active:not(:disabled) {
 }
 .ach-avatars {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   flex-shrink: 0;
+  justify-content: flex-end;
+  /* cap at three 26px avatars per row, then wrap */
+  max-width: 90px;
+}
+
+/* ------------------------------------------------------- locked achievements */
+.locked-ach {
+  margin-top: 4px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+}
+.locked-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 11px 14px;
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.95rem;
+  letter-spacing: 0.4px;
+  color: var(--ink-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.locked-summary::-webkit-details-marker {
+  display: none;
+}
+.locked-summary::before {
+  content: '▸';
+  color: var(--ink-faint);
+  transition: transform 0.15s ease;
+}
+.locked-ach[open] .locked-summary::before {
+  transform: rotate(90deg);
+}
+.locked-count {
+  font-family: 'Nunito Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  background: var(--line);
+  color: var(--ink-dim);
+  border-radius: 20px;
+  padding: 1px 9px;
+}
+.locked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px 12px;
+}
+.ach-locked {
+  border-left-color: var(--ink-faint);
+  background: rgba(255, 255, 255, 0.015);
+  opacity: 0.55;
+  filter: grayscale(1);
+  animation: none;
+}
+.ach-locked .ach-title {
+  color: var(--ink-dim);
+}
+.locked-lock {
+  flex-shrink: 0;
+  font-size: 1rem;
+  opacity: 0.7;
 }
 .ach-icon {
   font-size: 1.7rem;

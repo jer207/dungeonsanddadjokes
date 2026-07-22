@@ -4,6 +4,10 @@ import { isKnownPlayer, isDM } from '../utils/players.js'
 export default function NameSection({ players, name, onSubmit, locked, dmPending }) {
   const [value, setValue] = useState('')
   const [rejected, setRejected] = useState(false)
+  // The field starts read-only so the browser never classifies it as a
+  // login/address/payment field and pops its autofill bar. The first focus
+  // makes it editable (and opens the keyboard) before any keystroke.
+  const [editable, setEditable] = useState(false)
   const trimmed = value.trim()
 
   function handleSubmit(e) {
@@ -60,13 +64,19 @@ export default function NameSection({ players, name, onSubmit, locked, dmPending
             className="text-input name-input"
             type="text"
             value={value}
+            readOnly={!editable}
+            onFocus={(e) => {
+              e.currentTarget.removeAttribute('readonly')
+              setEditable(true)
+            }}
             onChange={(e) => {
               setValue(e.target.value)
               if (rejected) setRejected(false)
             }}
-            placeholder="Your name"
+            placeholder="e.g. Jim"
             aria-label="Your name"
             name="adventurer"
+            inputMode="text"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="words"

@@ -1,4 +1,5 @@
 import ProfileIcon from './ProfileIcon.jsx'
+import { ACHIEVEMENT_CATALOG } from '../utils/scoring.js'
 
 function joinNames(names) {
   if (!names || names.length === 0) return ''
@@ -8,12 +9,18 @@ function joinNames(names) {
 }
 
 // The standing "trophy shelf": every achievement earned so far, honors and
-// heckles alike. The one-time unlock is handled separately by AchievementModal.
+// heckles alike, plus an accordion of the ones still locked. The one-time
+// unlock is handled separately by AchievementModal.
 export default function Achievements({ banners, badges = {} }) {
-  if (!banners || banners.length === 0) return null
+  const list = banners || []
+  const unlocked = new Set(list.map((b) => b.id))
+  const locked = ACHIEVEMENT_CATALOG.filter((c) => !unlocked.has(c.id))
+
+  if (list.length === 0 && locked.length === 0) return null
+
   return (
     <div className="achievement-feed">
-      {banners.map((b) => {
+      {list.map((b) => {
         const who = b.who || []
         return (
           <div key={b.id} className={`ach-card ach-${b.tone}`}>
@@ -35,6 +42,30 @@ export default function Achievements({ banners, badges = {} }) {
           </div>
         )
       })}
+
+      {locked.length > 0 && (
+        <details className="locked-ach">
+          <summary className="locked-summary">
+            Still locked <span className="locked-count">{locked.length}</span>
+          </summary>
+          <div className="locked-list">
+            {locked.map((c) => (
+              <div key={c.id} className="ach-card ach-locked">
+                <span className="ach-icon" aria-hidden="true">
+                  {c.icon}
+                </span>
+                <div className="ach-body">
+                  <div className="ach-title">{c.title}</div>
+                  <div className="ach-text">{c.hint}</div>
+                </div>
+                <span className="locked-lock" aria-hidden="true">
+                  🔒
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   )
 }
