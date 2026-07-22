@@ -16,6 +16,17 @@ export const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDsWhuT
 // The name(s) that unlock the Dungeon Master control panel. Not case sensitive.
 export const DM_NAMES = ['dm']
 
+// Public URL of the deployed site, used by the DM's "share with the party"
+// button.
+export const SHARE_URL = 'https://jer207.github.io/dungeonsanddadjokes/'
+
+// The message the share button copies to the clipboard.
+export const SHARE_MESSAGE =
+  'The calendar has been conjured. Players are summoned. Travel to this link ' +
+  'and share your availability with the group.\n\n' +
+  SHARE_URL +
+  '\n\nThe world is counting on you …'
+
 export const isConfigured = () =>
   typeof APPS_SCRIPT_URL === 'string' &&
   APPS_SCRIPT_URL.startsWith('https://script.google.com/')

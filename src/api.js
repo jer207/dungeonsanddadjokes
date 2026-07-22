@@ -37,7 +37,7 @@ function readDemo() {
   }
   return {
     players: DEMO_PLAYERS,
-    config: { startDate: null, endDate: null },
+    config: { startDate: null, endDate: null, dmName: null, summonedAt: null },
     availability: [],
     submissions: [],
   }
@@ -73,9 +73,15 @@ async function remotePost(payload) {
 export async function getState() {
   if (isConfigured()) {
     const data = await remoteGet()
+    const config = data.config || {}
     return {
       players: data.players || [],
-      config: data.config || { startDate: null, endDate: null },
+      config: {
+        startDate: config.startDate ?? null,
+        endDate: config.endDate ?? null,
+        dmName: config.dmName ?? null,
+        summonedAt: config.summonedAt ?? null,
+      },
       availability: data.availability || [],
       submissions: data.submissions || [],
     }
@@ -108,12 +114,19 @@ export async function submitAvailability(name, selections) {
   return { ok: true }
 }
 
-export async function setDateRange(startDate, endDate) {
+export async function setDateRange(startDate, endDate, dmName) {
   if (isConfigured()) {
-    return remotePost({ action: 'setRange', startDate, endDate })
+    return remotePost({ action: 'setRange', startDate, endDate, dmName })
   }
   const state = readDemo()
-  state.config = { startDate, endDate }
+  const prev = state.config || {}
+  state.config = {
+    startDate,
+    endDate,
+    dmName: dmName || prev.dmName || null,
+    // Stamp the summon time once, on first conjure; preserve it on later edits.
+    summonedAt: prev.summonedAt || new Date().toISOString(),
+  }
   writeDemo(state)
   return { ok: true }
 }
@@ -123,7 +136,7 @@ export async function purge() {
     return remotePost({ action: 'purge' })
   }
   const state = readDemo()
-  state.config = { startDate: null, endDate: null }
+  state.config = { startDate: null, endDate: null, dmName: null, summonedAt: null }
   state.availability = []
   state.submissions = []
   writeDemo(state)

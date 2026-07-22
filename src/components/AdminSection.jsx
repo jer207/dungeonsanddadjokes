@@ -3,6 +3,8 @@ import ProgressBar from './ProgressBar.jsx'
 import ProfileIcon from './ProfileIcon.jsx'
 import Achievements from './Achievements.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import Toast from './Toast.jsx'
+import { SHARE_MESSAGE } from '../config.js'
 import {
   toWeeks,
   shortLabel,
@@ -29,8 +31,17 @@ export default function AdminSection({
   const [end, setEnd] = useState(config.endDate || '')
   const [rangeError, setRangeError] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [shared, setShared] = useState(false)
   const weeks = toWeeks(dates)
   const labels = weekdayLabels()
+
+  async function handleShare() {
+    const copied = await copyText(SHARE_MESSAGE)
+    if (copied) {
+      setShared(true)
+      setTimeout(() => setShared(false), 2500)
+    }
+  }
 
   function handleSave() {
     if (!start || !end) {
@@ -95,12 +106,16 @@ export default function AdminSection({
               </p>
             </div>
 
+            <button className="btn btn-dm btn-share" type="button" onClick={handleShare}>
+              Share with the party 🔗
+            </button>
+
             <button
               className="btn btn-dm btn-join"
               type="button"
               onClick={onJoinAsPlayer}
             >
-              Add my own availability as a player →
+              Add my availability →
             </button>
 
             <button
@@ -204,6 +219,35 @@ export default function AdminSection({
           onPurge()
         }}
       />
+
+      <Toast show={shared} message="Link Copied. Now share it." />
     </section>
   )
+}
+
+// Copy text to the clipboard, with a hidden-textarea fallback for browsers
+// that block the async Clipboard API. Runs inside the tap, so iOS allows it.
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch (e) {
+    /* fall through to the legacy path */
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch (e) {
+    return false
+  }
 }

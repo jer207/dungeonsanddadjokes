@@ -1,12 +1,5 @@
 import ProfileIcon from './ProfileIcon.jsx'
 
-const ICONS = {
-  silver: '🥈',
-  gold: '🏆',
-  snail: '🐌',
-  scroll: '📜',
-}
-
 function joinNames(names) {
   if (!names || names.length === 0) return ''
   if (names.length === 1) return names[0]
@@ -14,16 +7,18 @@ function joinNames(names) {
   return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`
 }
 
+// The standing "trophy shelf": every achievement earned so far, honors and
+// heckles alike. The one-time unlock is handled separately by AchievementModal.
 export default function Achievements({ banners, badges = {} }) {
   if (!banners || banners.length === 0) return null
   return (
     <div className="achievement-feed">
-      {banners.map((b, i) => {
+      {banners.map((b) => {
         const who = b.who || []
         return (
-          <div key={i} className={`ach-card ach-${b.icon}`}>
+          <div key={b.id} className={`ach-card ach-${b.tone}`}>
             <span className="ach-icon" aria-hidden="true">
-              {ICONS[b.icon] || '⭐'}
+              {b.icon}
             </span>
             <div className="ach-body">
               <div className="ach-unlock">

@@ -4,11 +4,15 @@ import NameSection from './components/NameSection.jsx'
 import CalendarSection from './components/CalendarSection.jsx'
 import ResultsSection from './components/ResultsSection.jsx'
 import AdminSection from './components/AdminSection.jsx'
+import Achievements from './components/Achievements.jsx'
+import AchievementModal from './components/AchievementModal.jsx'
+import LoadingOverlay from './components/LoadingOverlay.jsx'
 import { getState, submitAvailability, setDateRange, purge } from './api.js'
 import { isConfigured } from './config.js'
 import { resolveName, isDM, buildAvatarMap } from './utils/players.js'
 import { dateRange } from './utils/dates.js'
 import { buildResults, buildAchievements } from './utils/scoring.js'
+import { getSeen, markSeen } from './utils/seen.js'
 import { AvatarContext } from './components/AvatarContext.js'
 
 export default function App() {
@@ -23,11 +27,13 @@ export default function App() {
 
   const [name, setName] = useState('') // canonical name once submitted
   const [dmMode, setDmMode] = useState(false)
+  const [dmPending, setDmPending] = useState(false) // typed "dm", now naming self
   const [selections, setSelections] = useState({}) // { iso: 'yes'|'maybe' }
   const [nameDone, setNameDone] = useState(false)
   const [calendarDone, setCalendarDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [dmBusy, setDmBusy] = useState(false)
+  const [modalQueue, setModalQueue] = useState([]) // achievement modals to pop
 
   async function refresh() {
     const state = await getState()
@@ -63,9 +69,28 @@ export default function App() {
   )
 
   const { badges, banners } = useMemo(
-    () => buildAchievements(data.players, data.availability, data.submissions),
-    [data.players, data.availability, data.submissions],
+    () => buildAchievements(data.players, data.availability, data.submissions, data.config),
+    [data.players, data.availability, data.submissions, data.config],
   )
+
+  // Queue any not-yet-seen achievements for the logged-in player as pop-up
+  // modals. Runs on login and after each refresh (e.g. once a submission lands,
+  // or when an end-of-round badge resolves). DM-in-Sanctum sees none — personal
+  // achievements pop only in player mode.
+  useEffect(() => {
+    if (!nameDone || dmMode || dmPending || !name) {
+      setModalQueue([])
+      return
+    }
+    const seen = getSeen(name)
+    setModalQueue(banners.filter((b) => b.who.includes(name) && !seen.has(b.id)))
+  }, [nameDone, dmMode, dmPending, name, banners])
+
+  function dismissModal() {
+    const cur = modalQueue[0]
+    if (cur) markSeen(name, cur.id)
+    setModalQueue((q) => q.slice(1))
+  }
 
   // One unique avatar per known name (roster + anyone who has responded).
   const avatarMap = useMemo(() => {
@@ -86,11 +111,19 @@ export default function App() {
   }
 
   function handleNameSubmit(typed) {
-    if (isDM(typed)) {
+    // Step two of the DM flow: they've typed "dm", this is their real name.
+    if (dmPending) {
+      const canonical = resolveName(typed, data.players)
+      setDmPending(false)
       setDmMode(true)
-      setName('DM')
+      setName(canonical) // the DM's own player identity, used when they join
       setNameDone(true)
       scrollToSection('section-admin')
+      return
+    }
+    // Step one: the "dm" keyword opens DM mode but first asks for a name.
+    if (isDM(typed)) {
+      setDmPending(true)
       return
     }
     setDmMode(false)
@@ -138,7 +171,8 @@ export default function App() {
     setDmBusy(true)
     setError(null)
     try {
-      await setDateRange(start, end)
+      // Record which player is the DM so achievements resolve correctly.
+      await setDateRange(start, end, name)
       await refresh()
     } catch (e) {
       setError(e.message || 'Could not save the range.')
@@ -160,10 +194,10 @@ export default function App() {
     }
   }
 
-  // Return to a blank name field (used by both "Log out" and the DM's
-  // "add my own availability" button, which drops the DM into the player flow).
+  // Log out: return to a blank name field.
   function resetToNameEntry() {
     setDmMode(false)
+    setDmPending(false)
     setName('')
     setSelections({})
     setNameDone(false)
@@ -172,7 +206,21 @@ export default function App() {
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
   }
 
-  const totalPlayers = data.players.length
+  // The DM taps "Add my availability" — drop straight into player mode, already
+  // logged in under their own name. To return to the Sanctum they log out and
+  // type "dm" again.
+  function joinAsPlayer() {
+    setDmMode(false)
+    const canonical = name
+    const existing = {}
+    for (const a of data.availability) {
+      if (a.name === canonical) existing[a.date] = a.status
+    }
+    setSelections(existing)
+    setCalendarDone(data.submissions.some((s) => s.name === canonical))
+    setNameDone(true)
+    scrollToSection('section-calendar')
+  }
 
   return (
     <AvatarContext.Provider value={avatarMap}>
@@ -182,7 +230,7 @@ export default function App() {
       {nameDone && (
         <div className="identity-bar">
           <span className="identity-label">
-            {dmMode ? 'Dungeon Master' : `Playing as ${name}`}
+            {dmMode ? `Dungeon Master · ${name}` : `Playing as ${name}`}
           </span>
           <button type="button" className="logout-btn" onClick={resetToNameEntry}>
             Log out
@@ -208,23 +256,35 @@ export default function App() {
               name={name}
               onSubmit={handleNameSubmit}
               locked={nameDone}
+              dmPending={dmPending}
             />
-            <CalendarSection
-              dates={dates}
-              selections={selections}
-              onToggle={toggleCell}
-              onSubmit={handleCalendarSubmit}
-              disabled={!nameDone}
-              submitting={submitting}
-              submitted={calendarDone}
-            />
-            <ResultsSection
-              results={results}
-              badges={badges}
-              banners={banners}
-              disabled={!calendarDone}
-              totalPlayers={totalPlayers}
-            />
+            {!dmPending && (
+              <>
+                <CalendarSection
+                  dates={dates}
+                  selections={selections}
+                  onToggle={toggleCell}
+                  onSubmit={handleCalendarSubmit}
+                  disabled={!nameDone}
+                  submitting={submitting}
+                  submitted={calendarDone}
+                />
+                {nameDone && banners.length > 0 && (
+                  <section className="section section-achievements" id="section-achievements">
+                    <div className="section-inner">
+                      <h2 className="section-heading">Hall of Fame</h2>
+                      <p className="help-text">Deeds and misdeeds, tallied by Lolth herself.</p>
+                      <Achievements banners={banners} badges={badges} />
+                    </div>
+                  </section>
+                )}
+                <ResultsSection
+                  results={results}
+                  badges={badges}
+                  disabled={!calendarDone}
+                />
+              </>
+            )}
           </>
         )}
 
@@ -238,7 +298,7 @@ export default function App() {
             submissions={data.submissions}
             onSaveRange={handleSaveRange}
             onPurge={handlePurge}
-            onJoinAsPlayer={resetToNameEntry}
+            onJoinAsPlayer={joinAsPlayer}
             busy={dmBusy}
           />
         )}
@@ -247,6 +307,12 @@ export default function App() {
       <footer className="app-footer">
         <span>May your rolls be ever in your favour.</span>
       </footer>
+
+      {modalQueue.length > 0 && (
+        <AchievementModal banner={modalQueue[0]} badges={badges} onClose={dismissModal} />
+      )}
+
+      <LoadingOverlay show={submitting || dmBusy} />
     </div>
     </AvatarContext.Provider>
   )

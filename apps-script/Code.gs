@@ -10,7 +10,9 @@
  *   Players        A: Name        B: Variants (semicolon-separated)
  *                  e.g.  Jim | Jim;James;LaMarca;Jim LaMarca;James Lamarca
  *
- *   Config         A: StartDate   B: EndDate     (YYYY-MM-DD, row 2)
+ *   Config         A: StartDate   B: EndDate   C: DMName   D: SummonedAt
+ *                  (row 2; DMName marks which player is the DM, SummonedAt is
+ *                   an ISO timestamp stamped once when the calendar is conjured)
  *
  *   Availability   A: Name        B: Date        C: Status  (yes|maybe)
  *
@@ -32,7 +34,7 @@ function sheet_(name) {
   if (!sh) {
     sh = ss.insertSheet(name);
     if (name === 'Players') sh.appendRow(['Name', 'Variants']);
-    if (name === 'Config') sh.appendRow(['StartDate', 'EndDate']);
+    if (name === 'Config') sh.appendRow(['StartDate', 'EndDate', 'DMName', 'SummonedAt']);
     if (name === 'Availability') sh.appendRow(['Name', 'Date', 'Status']);
     if (name === 'Submissions') sh.appendRow(['Name', 'Timestamp', 'Order']);
   }
@@ -73,11 +75,14 @@ function readAll_() {
     players.push({ name: name, variants: variants });
   }
 
-  var config = { startDate: null, endDate: null };
+  var config = { startDate: null, endDate: null, dmName: null, summonedAt: null };
   var cVals = sheet_('Config').getDataRange().getValues();
   if (cVals.length > 1) {
     config.startDate = toDateStr_(cVals[1][0]) || null;
     config.endDate = toDateStr_(cVals[1][1]) || null;
+    config.dmName = String(cVals[1][2] || '').trim() || null;
+    // SummonedAt is a full timestamp; let JSON serialise a Date to ISO.
+    config.summonedAt = cVals[1][3] !== '' && cVals[1][3] !== null ? cVals[1][3] : null;
   }
 
   var availability = [];
@@ -180,11 +185,21 @@ function handleSetRange_(body) {
   var start = toDateStr_(body.startDate);
   var end = toDateStr_(body.endDate);
   if (!start || !end) return { error: 'Missing start or end date' };
+
   var cfg = sheet_('Config');
+  var cur = cfg.getDataRange().getValues();
+
+  // Preserve an existing SummonedAt (stamped once, on first conjure) and DMName.
+  var summonedAt = (cur.length > 1 && cur[1][3] !== '' && cur[1][3] !== null)
+    ? cur[1][3]
+    : new Date();
+  var dmName = String(body.dmName || '').trim()
+    || (cur.length > 1 ? String(cur[1][2] || '').trim() : '');
+
   cfg.clearContents();
-  cfg.getRange(1, 1, 2, 2).setValues([
-    ['StartDate', 'EndDate'],
-    [start, end],
+  cfg.getRange(1, 1, 2, 4).setValues([
+    ['StartDate', 'EndDate', 'DMName', 'SummonedAt'],
+    [start, end, dmName, summonedAt],
   ]);
   return { ok: true };
 }
@@ -192,7 +207,7 @@ function handleSetRange_(body) {
 function handlePurge_() {
   var cfg = sheet_('Config');
   cfg.clearContents();
-  cfg.getRange(1, 1, 1, 2).setValues([['StartDate', 'EndDate']]);
+  cfg.getRange(1, 1, 1, 4).setValues([['StartDate', 'EndDate', 'DMName', 'SummonedAt']]);
 
   var av = sheet_('Availability');
   av.clearContents();

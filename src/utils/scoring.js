@@ -1,5 +1,13 @@
 // Results ranking + achievement logic.
 
+import { fromISO } from './dates.js'
+
+// Fri, Sat, or Sun. Day-of-week: 0 = Sun … 6 = Sat.
+function isWeekend(iso) {
+  const dow = fromISO(iso).getDay()
+  return dow === 0 || dow === 5 || dow === 6
+}
+
 // Build the ranked results for the calendar dates.
 //   dates        : ordered array of ISO dates currently in the calendar
 //   availability : [ { name, date, status } ]  (status = 'yes' | 'maybe')
@@ -50,68 +58,211 @@ export function selectionCounts(availability, submissions) {
   return counts
 }
 
-// Compute per-player badges plus the headline achievement banners.
-export function buildAchievements(players, availability, submissions) {
+// Compute per-player avatar badges plus the achievement list.
+//
+//   config : { dmName, summonedAt }  (both optional)
+//
+// Each achievement carries a stable `id` (so the front end can remember which
+// modals a person has already dismissed) and a `tone`: 'honor' for earned
+// distinctions, 'gag' for the good-natured heckles. Honors are listed first.
+export function buildAchievements(players, availability, submissions, config = {}) {
   const badges = {} // name -> { silverRing, goldBorder, star }
-  const banners = [] // { icon, title, text }
+  const honors = [] // { id, tone, icon, who, title, text }
+  const gags = []
 
-  if (submissions.length === 0) return { badges, banners }
+  if (submissions.length === 0) return { badges, banners: [] }
+
+  const dmName = config.dmName || null
+  const summonedAt = config.summonedAt ? new Date(config.summonedAt).getTime() : null
 
   const ordered = [...submissions].sort((a, b) => a.order - b.order)
-  const counts = selectionCounts(availability, submissions)
+  const counts = selectionCounts(availability, submissions) // name -> #days offered
+  const submitted = new Set(submissions.map((s) => s.name))
 
-  // First to submit -> silver ring (awarded as soon as anyone submits).
-  const first = ordered[0]
-  badges[first.name] = { ...(badges[first.name] || {}), silverRing: true }
-  banners.push({
-    icon: 'silver',
-    who: [first.name],
-    title: 'The Early Bird',
-    text: `First to answer the call. Silver-ringed for sheer initiative.`,
-  })
+  // Per-player selection rows, and how many players offered each date.
+  const byName = new Map()
+  const dateOfferers = new Map()
+  for (const a of availability) {
+    if (!byName.has(a.name)) byName.set(a.name, [])
+    byName.get(a.name).push(a)
+    dateOfferers.set(a.date, (dateOfferers.get(a.date) || 0) + 1)
+  }
+  const picks = (name) => byName.get(name) || []
 
-  // Roster size: prefer the invited roster; fall back to who has submitted.
+  // --- Early Bird: the first NON-DM to submit ------------------------------
+  const firstPlayer = ordered.find((s) => s.name !== dmName)
+  if (firstPlayer) {
+    badges[firstPlayer.name] = { ...(badges[firstPlayer.name] || {}), silverRing: true }
+    honors.push({
+      id: 'early-bird',
+      tone: 'honor',
+      icon: '🐦',
+      who: [firstPlayer.name],
+      title: 'The Early Bird',
+      text: 'First to answer the call. The party moves because you moved.',
+    })
+  }
+
+  // --- Master Sniper: the DM, only when the DM submitted first of all -------
+  if (dmName && ordered.length && ordered[0].name === dmName) {
+    gags.push({
+      id: 'master-sniper',
+      tone: 'gag',
+      icon: '🎯',
+      who: [dmName],
+      title: 'Master Sniper',
+      text:
+        'Quick to the draw the moment the calendar rose — but sniping glory ' +
+        'from the players is frowned upon by Lolth.',
+    })
+  }
+
+  // --- Weekend Warrior: every day offered is a weekend day ------------------
+  const weekendWarriors = submissions
+    .map((s) => s.name)
+    .filter((n) => picks(n).length > 0 && picks(n).every((a) => isWeekend(a.date)))
+  if (weekendWarriors.length) {
+    honors.push({
+      id: 'weekend-warrior',
+      tone: 'honor',
+      icon: '⚔️',
+      who: weekendWarriors,
+      title: 'Weekend Warrior',
+      text: 'Fri, Sat, Sun, nothing else. A true servant of the weekend.',
+    })
+  }
+
+  // --- Swift Raven: submitted within 24h of the summon ---------------------
+  if (summonedAt) {
+    const swift = submissions
+      .filter((s) => {
+        const t = s.timestamp ? new Date(s.timestamp).getTime() : NaN
+        return t >= summonedAt && t - summonedAt <= 24 * 60 * 60 * 1000
+      })
+      .map((s) => s.name)
+    if (swift.length) {
+      honors.push({
+        id: 'swift-raven',
+        tone: 'honor',
+        icon: '⚡',
+        who: swift,
+        title: 'Swift Raven',
+        text: 'Answered within a day of the call. Reliable as sunrise.',
+      })
+    }
+  }
+
+  // --- Fence-Sitter: more maybes than yeses --------------------------------
+  const fenceSitters = submissions
+    .map((s) => s.name)
+    .filter((n) => {
+      const list = picks(n)
+      const yes = list.filter((a) => a.status === 'yes').length
+      const maybe = list.filter((a) => a.status === 'maybe').length
+      return maybe > yes
+    })
+  if (fenceSitters.length) {
+    gags.push({
+      id: 'fence-sitter',
+      tone: 'gag',
+      icon: '🤷',
+      who: fenceSitters,
+      title: 'The Fence-Sitter',
+      text: 'More maybes than yeses. Commitment is a dragon you’d rather not fight.',
+    })
+  }
+
+  // --- Contrarian: at least one day offered, but not one weekend -----------
+  const contrarians = submissions
+    .map((s) => s.name)
+    .filter((n) => picks(n).length > 0 && picks(n).every((a) => !isWeekend(a.date)))
+  if (contrarians.length) {
+    gags.push({
+      id: 'contrarian',
+      tone: 'gag',
+      icon: '🗓️',
+      who: contrarians,
+      title: 'The Contrarian',
+      text: 'Not one weekend. We usually play them. Bold.',
+    })
+  }
+
+  // Roster: everyone in the Players tab (the DM lives there too).
   const rosterSize = players.length || submissions.length
-  const everyoneIn = submissions.length >= rosterSize && rosterSize > 0
+  const everyoneIn = submitted.size >= rosterSize && rosterSize > 0
 
+  // --- Fashionably Late ----------------------------------------------------
+  // Once every player but one has answered, that straggler is the inevitable
+  // last — so we can crown them before they even submit.
+  if (everyoneIn && ordered.length > 1) {
+    gags.push({
+      id: 'fashionably-late',
+      tone: 'gag',
+      icon: '🐌',
+      who: [ordered[ordered.length - 1].name],
+      title: 'Fashionably Late',
+      text: 'Kept the whole party waiting. The tavern keeper is not impressed.',
+    })
+  } else if (!everyoneIn && players.length > 1) {
+    const missing = players.map((p) => p.name).filter((n) => !submitted.has(n))
+    if (missing.length === 1) {
+      gags.push({
+        id: 'fashionably-late',
+        tone: 'gag',
+        icon: '🐌',
+        who: [missing[0]],
+        title: 'Fashionably Late',
+        text: 'The whole party is waiting on you. The tavern keeper is not impressed.',
+      })
+    }
+  }
+
+  // --- End-state honors and heckles (need the whole party in) --------------
   if (everyoneIn) {
     const values = [...counts.values()]
     const max = Math.max(...values)
     const min = Math.min(...values)
 
-    // Most dates -> gold border(s).
+    // Most days -> gold border(s).
     const champions = [...counts.entries()].filter(([, v]) => v === max).map(([n]) => n)
-    for (const n of champions) {
-      badges[n] = { ...(badges[n] || {}), goldBorder: true }
-    }
-    banners.push({
-      icon: 'gold',
+    for (const n of champions) badges[n] = { ...(badges[n] || {}), goldBorder: true }
+    honors.push({
+      id: 'generous',
+      tone: 'honor',
+      icon: '🏆',
       who: champions,
       title: champions.length > 1 ? 'The Generous Ones' : 'The Generous One',
-      text: `Offered the most days (${max}). Gold-bordered for flexibility.`,
+      text: `Offered the most days (${max}). The most giving soul at the table.`,
     })
-
-    // A gold + silver player earns a star.
+    // Gold + silver earns a star.
     for (const n of champions) {
       if (badges[n] && badges[n].silverRing) badges[n].star = true
     }
 
-    // Last to submit -> heckle.
-    const last = ordered[ordered.length - 1]
-    if (ordered.length > 1) {
-      banners.push({
-        icon: 'snail',
-        who: [last.name],
-        title: 'Fashionably Late',
-        text: `Kept the whole party waiting. The tavern keeper is not impressed.`,
+    // Lone Wolf: every day offered was offered by nobody else.
+    const loners = submissions
+      .map((s) => s.name)
+      .filter(
+        (n) => picks(n).length > 0 && picks(n).every((a) => (dateOfferers.get(a.date) || 0) === 1),
+      )
+    if (loners.length) {
+      gags.push({
+        id: 'lone-wolf',
+        tone: 'gag',
+        icon: '🐺',
+        who: loners,
+        title: 'The Lone Wolf',
+        text: 'Every night you offered, you offered alone. Herding you is impossible.',
       })
     }
 
-    // Fewest dates -> heckle (skip if it's the same as the champion, i.e. all equal).
+    // Fewest days -> heckle (skip when everyone offered the same count).
     if (min !== max) {
       const scrooges = [...counts.entries()].filter(([, v]) => v === min).map(([n]) => n)
-      banners.push({
-        icon: 'scroll',
+      gags.push({
+        id: 'busy-adventurer',
+        tone: 'gag',
+        icon: '📜',
         who: scrooges,
         title: 'The Busy Adventurer',
         text: `Offered the fewest days (${min}). Too much questing, not enough gaming?`,
@@ -119,5 +270,5 @@ export function buildAchievements(players, availability, submissions) {
     }
   }
 
-  return { badges, banners }
+  return { badges, banners: [...honors, ...gags] }
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { isKnownPlayer, isDM } from '../utils/players.js'
 
-export default function NameSection({ players, name, onSubmit, locked }) {
+export default function NameSection({ players, name, onSubmit, locked, dmPending }) {
   const [value, setValue] = useState('')
   const [warned, setWarned] = useState(false)
   const trimmed = value.trim()
@@ -9,6 +9,11 @@ export default function NameSection({ players, name, onSubmit, locked }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!trimmed) return
+    // Second step of the DM flow: they've typed "dm", now they name themselves.
+    if (dmPending) {
+      onSubmit(trimmed)
+      return
+    }
     if (isDM(trimmed) || isKnownPlayer(trimmed, players)) {
       onSubmit(trimmed)
       return
@@ -36,8 +41,12 @@ export default function NameSection({ players, name, onSubmit, locked }) {
   return (
     <section className="section section-name" id="section-name">
       <div className="section-inner narrow">
-        <h2 className="section-heading">Who goes there?</h2>
-        <p className="help-text">Enter your name to begin your quest for a game night.</p>
+        <h2 className="section-heading">{dmPending ? 'Name yourself, Dungeon Master' : 'Who goes there?'}</h2>
+        <p className="help-text">
+          {dmPending
+            ? 'The Sanctum knows its master. Which of the party do you play?'
+            : 'Enter your name to begin your quest for a game night.'}
+        </p>
         <form onSubmit={handleSubmit} className="name-form">
           <input
             className="text-input name-input"
@@ -47,18 +56,18 @@ export default function NameSection({ players, name, onSubmit, locked }) {
               setValue(e.target.value)
               if (warned) setWarned(false)
             }}
-            placeholder="Your name"
+            placeholder={dmPending ? 'Your name' : 'Your name'}
             aria-label="Your name"
             autoComplete="off"
           />
-          {warned && (
+          {warned && !dmPending && (
             <p className="help-text subtle">
               Hmm, that name isn't on the guest list. Check your spelling if you expected to
               be recognised — or tap again to continue anyway.
             </p>
           )}
           <button className="btn btn-primary" type="submit" disabled={!trimmed}>
-            {warned ? 'Continue anyway' : 'Next'}
+            {dmPending ? 'Enter the Sanctum' : warned ? 'Continue anyway' : 'Next'}
           </button>
         </form>
       </div>

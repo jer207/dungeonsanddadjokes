@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import ProgressBar from './ProgressBar.jsx'
 import ProfileIcon from './ProfileIcon.jsx'
-import Achievements from './Achievements.jsx'
 import { prettyDate } from '../utils/dates.js'
 
-export default function ResultsSection({ results, badges, banners, disabled, totalPlayers }) {
+export default function ResultsSection({ results, badges, disabled }) {
   const [expanded, setExpanded] = useState(null)
 
   const anyResponses = results.some((r) => r.yesCount + r.maybeCount > 0)
@@ -20,8 +19,6 @@ export default function ResultsSection({ results, badges, banners, disabled, tot
         <p className="help-text">
           Best nights float to the top. Tap a date to see who's in.
         </p>
-
-        <Achievements banners={banners} badges={badges} />
 
         {!anyResponses && (
           <p className="empty-note">No votes counted yet. Be the first to answer the call!</p>
