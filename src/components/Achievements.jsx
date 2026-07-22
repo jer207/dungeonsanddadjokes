@@ -49,20 +49,24 @@ export default function Achievements({ banners, badges = {} }) {
             Still locked <span className="locked-count">{locked.length}</span>
           </summary>
           <div className="locked-list">
-            {locked.map((c) => (
-              <div key={c.id} className="ach-card ach-locked">
-                <span className="ach-icon" aria-hidden="true">
-                  {c.icon}
-                </span>
-                <div className="ach-body">
-                  <div className="ach-title">{c.title}</div>
-                  <div className="ach-text">{c.hint}</div>
+            {locked.map((c) => {
+              // Gags stay a mystery until earned; honors show how to earn them.
+              const gag = c.tone === 'gag'
+              return (
+                <div key={c.id} className="ach-card ach-locked">
+                  <span className="ach-icon" aria-hidden="true">
+                    {gag ? '❔' : c.icon}
+                  </span>
+                  <div className="ach-body">
+                    <div className="ach-title">{gag ? 'Unknown achievement' : c.title}</div>
+                    <div className="ach-text">{gag ? c.teaser : c.hint}</div>
+                  </div>
+                  <span className="locked-lock" aria-hidden="true">
+                    🔒
+                  </span>
                 </div>
-                <span className="locked-lock" aria-hidden="true">
-                  🔒
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </details>
       )}

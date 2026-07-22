@@ -78,21 +78,17 @@ body {
 
 /* --------------------------------------------------------------- header --- */
 .app-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
   text-align: center;
-  padding: 14px 8px 12px;
+  padding: 12px 8px 10px;
   background: rgba(14, 11, 20, 0.82);
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
-  margin: 0 -16px 8px;
+  margin: 0 -16px 12px;
 }
 
 .app-title {
   font-family: 'Cinzel Decorative', serif;
   font-weight: 900;
-  font-size: clamp(1.5rem, 6vw, 2.4rem);
+  font-size: clamp(1.1rem, 4.6vw, 1.7rem);
   line-height: 1.05;
   margin: 0;
   letter-spacing: 0.5px;
@@ -105,7 +101,7 @@ body {
 
 .app-subtitle {
   font-family: 'Patrick Hand SC', cursive;
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   color: var(--ink-dim);
   margin: 2px 0 0;
   letter-spacing: 1px;
@@ -117,7 +113,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 8px 0 0;
+  margin: 8px 0 22px;
   padding: 8px 14px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
@@ -175,7 +171,7 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  scroll-margin-top: 92px;
+  scroll-margin-top: 14px;
   overflow: hidden;
   transition: opacity 0.3s ease, filter 0.3s ease;
 }
@@ -937,6 +933,7 @@ body:has(.app.dm-mode) {
 /* A little more room to breathe throughout. */
 .app-main {
   gap: 22px;
+  padding-top: 0;
 }
 .dm-controls {
   margin-bottom: 18px;

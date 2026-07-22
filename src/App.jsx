@@ -13,6 +13,7 @@ import { resolveName, isDM, buildAvatarMap } from './utils/players.js'
 import { dateRange } from './utils/dates.js'
 import { buildResults, buildAchievements } from './utils/scoring.js'
 import { getSeen, markSeen } from './utils/seen.js'
+import { readSession, saveSession, clearSession } from './utils/session.js'
 import { AvatarContext } from './components/AvatarContext.js'
 
 export default function App() {
@@ -43,6 +44,7 @@ export default function App() {
 
   useEffect(() => {
     refresh()
+      .then((state) => restoreSession(state))
       .catch((e) => {
         const msg = String(e && e.message)
         if (/failed to fetch|networkerror|load failed/i.test(msg)) {
@@ -107,11 +109,34 @@ export default function App() {
   }, [data.players, data.submissions, data.availability])
 
   function scrollToSection(id) {
-    // let the DOM settle first
-    requestAnimationFrame(() => {
+    // Wait for the section to unlock and lay out (and any overlay to clear)
+    // before scrolling — a single rAF fires too early on mobile.
+    setTimeout(() => {
       const el = document.getElementById(id)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
+    }, 80)
+  }
+
+  // Restore a saved login on load so a refresh doesn't dump you at the name
+  // prompt. Runs after the first data fetch so player selections can preload.
+  function restoreSession(state) {
+    const saved = readSession()
+    if (!saved || !saved.name) return
+    if (saved.dmMode) {
+      setDmMode(true)
+      setName(saved.name)
+      setNameDone(true)
+      return
+    }
+    const canonical = saved.name
+    const existing = {}
+    for (const a of state.availability) {
+      if (a.name === canonical) existing[a.date] = a.status
+    }
+    setSelections(existing)
+    setCalendarDone(state.submissions.some((s) => s.name === canonical))
+    setName(canonical)
+    setNameDone(true)
   }
 
   function handleNameSubmit(typed) {
@@ -122,6 +147,7 @@ export default function App() {
       setDmMode(true)
       setName(canonical) // the DM's own player identity, used when they join
       setNameDone(true)
+      saveSession(canonical, true)
       scrollToSection('section-admin')
       // Backfill DMName on an already-live calendar so achievements can tell
       // who the DM is. setDateRange only rewrites Config — it preserves
@@ -153,6 +179,7 @@ export default function App() {
     setSelections(existing)
     setCalendarDone(data.submissions.some((s) => s.name === canonical))
     setNameDone(true)
+    saveSession(canonical, false)
     scrollToSection('section-calendar')
   }
 
@@ -212,6 +239,7 @@ export default function App() {
 
   // Log out: return to a blank name field.
   function resetToNameEntry() {
+    clearSession()
     setDmMode(false)
     setDmPending(false)
     setName('')
@@ -235,6 +263,7 @@ export default function App() {
     setSelections(existing)
     setCalendarDone(data.submissions.some((s) => s.name === canonical))
     setNameDone(true)
+    saveSession(canonical, false)
     scrollToSection('section-calendar')
   }
 
@@ -286,7 +315,7 @@ export default function App() {
                   submitting={submitting}
                   submitted={calendarDone}
                 />
-                {nameDone && banners.length > 0 && (
+                {nameDone && (
                   <section className="section section-achievements" id="section-achievements">
                     <div className="section-inner">
                       <h2 className="section-heading">Hall of Fame</h2>
