@@ -124,17 +124,21 @@ The repo already includes the deploy workflow at
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). You just need to
 switch Pages to "GitHub Actions":
 
-1. Push this repository to `main` on GitHub.
-2. Go to **Settings → Pages**.
-3. Under **Build and deployment → Source**, choose **GitHub Actions**.
-4. Go to the **Actions** tab and let the *Deploy to GitHub Pages* workflow run
-   (it runs on every push to `main`; you can also trigger it manually with
-   *Run workflow*).
-5. Your site will be live at:
+1. Go to **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Go to the **Actions** tab and let the *Deploy to GitHub Pages* workflow run.
+   The workflow triggers on every push to the repo's **default branch** (and to
+   `main`), so it will run automatically on the next push; you can also start it
+   manually with **Run workflow**.
+4. Your site will be live at:
 
    ```
    https://jer207.github.io/dungeonsanddadjokes/
    ```
+
+> The workflow deploys from the **default branch**. This repo's default branch
+> is currently `claude/dnd-group-scheduler-vkiekw`; if you later create/rename
+> the default to `main`, the workflow already covers that too.
 
 > **Important:** the app is configured for the project path
 > `/dungeonsanddadjokes/` (see `base` in `vite.config.js`). If you ever rename
