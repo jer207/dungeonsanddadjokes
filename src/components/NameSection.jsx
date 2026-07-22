@@ -3,12 +3,22 @@ import { isKnownPlayer, isDM } from '../utils/players.js'
 
 export default function NameSection({ players, name, onSubmit, locked }) {
   const [value, setValue] = useState(name || '')
+  const [warned, setWarned] = useState(false)
   const trimmed = value.trim()
-  const known = trimmed && (isDM(trimmed) || isKnownPlayer(trimmed, players))
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!trimmed) return
+    // Recognised names (and the DM) go straight through.
+    if (isDM(trimmed) || isKnownPlayer(trimmed, players)) {
+      onSubmit(trimmed)
+      return
+    }
+    // First tap on an unrecognised name: show the note and let them confirm.
+    if (!warned) {
+      setWarned(true)
+      return
+    }
     onSubmit(trimmed)
   }
 
@@ -22,19 +32,22 @@ export default function NameSection({ players, name, onSubmit, locked }) {
             className="text-input name-input"
             type="text"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => {
+              setValue(e.target.value)
+              if (warned) setWarned(false) // reset the note once they edit again
+            }}
             placeholder="Your name"
             aria-label="Your name"
             autoComplete="off"
           />
-          {trimmed && !known && !isDM(trimmed) && (
+          {warned && (
             <p className="help-text subtle">
-              Hmm, that name isn't on the guest list — you can still continue, but check
-              your spelling if you expected to be recognised.
+              Hmm, that name isn't on the guest list. Check your spelling if you expected to
+              be recognised — or tap again to continue anyway.
             </p>
           )}
           <button className="btn btn-primary" type="submit" disabled={!trimmed}>
-            {locked ? 'Change name' : 'Next'}
+            {warned ? 'Continue anyway' : locked ? 'Change name' : 'Next'}
           </button>
         </form>
       </div>

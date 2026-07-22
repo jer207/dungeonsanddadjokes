@@ -111,11 +111,55 @@ body {
   letter-spacing: 1px;
 }
 
-/* dm mode recolours the whole page a dark, evil red */
-.app.dm-mode {
-  /* handled via body class below */
+/* identity + log out strip, shown once a name/DM is active */
+.identity-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 8px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
 }
-.app.dm-mode ~ * {
+.identity-label {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.98rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.3px;
+}
+.logout-btn {
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.logout-btn:hover {
+  border-color: var(--epic);
+  color: #fff;
+}
+.app.dm-mode .identity-bar {
+  background: var(--dm-elev);
+  border-color: var(--dm-line);
+}
+.app.dm-mode .logout-btn {
+  border-color: var(--dm-line);
+  color: #f0dede;
+}
+.app.dm-mode .logout-btn:hover {
+  border-color: var(--dm-crimson);
+}
+
+.btn-join {
+  display: block;
+  width: 100%;
+  margin-bottom: 18px;
 }
 
 /* ----------------------------------------------------------- structure --- */
@@ -708,6 +752,36 @@ body:has(.app.dm-mode) {
   font-size: 0.9rem;
   color: #d8a5a5;
 }
+/* Match the native date control to the DM's dark-red theme. color-scheme:dark
+   renders the browser's calendar popup dark; the indicator is tinted crimson. */
+.app.dm-mode input[type='date'] {
+  color-scheme: dark;
+  accent-color: var(--dm-crimson);
+}
+.app.dm-mode input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(28%) sepia(85%) saturate(2200%) hue-rotate(338deg) brightness(90%);
+  cursor: pointer;
+  opacity: 0.9;
+}
+.app.dm-mode input[type='date']:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+/* ------------------------------------------------- mobile-first emphasis --- */
+/* On phones, headings are centred and the primary action buttons go full
+   width for easy thumb targets. Restored to the roomier desktop layout below. */
+.section-heading,
+.section-subheading {
+  text-align: center;
+}
+.btn-primary,
+.btn-dm {
+  display: block;
+  width: 100%;
+}
+.dm-range {
+  justify-content: center;
+}
 
 /* --------------------------------------------------------- larger screens */
 @media (min-width: 620px) {
@@ -716,5 +790,20 @@ body:has(.app.dm-mode) {
   }
   .cell {
     font-size: 0.82rem;
+  }
+  .section-calendar .section-heading,
+  .section-results .section-heading,
+  .section-admin .section-heading,
+  .section-subheading {
+    text-align: left;
+  }
+  .btn-primary,
+  .btn-dm {
+    width: auto;
+  }
+  /* these stay full width intentionally */
+  .btn-submit,
+  .btn-join {
+    width: 100%;
   }
 }

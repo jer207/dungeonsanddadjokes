@@ -20,6 +20,7 @@ export default function AdminSection({
   submissions,
   onSaveRange,
   onPurge,
+  onJoinAsPlayer,
   busy,
 }) {
   const hasRange = !!(config.startDate && config.endDate)
@@ -104,6 +105,14 @@ export default function AdminSection({
 
         {hasRange && (
           <>
+            <button
+              className="btn btn-dm btn-join"
+              type="button"
+              onClick={onJoinAsPlayer}
+            >
+              Add my own availability as a player →
+            </button>
+
             <h3 className="section-subheading dm-heading">The Calendar</h3>
             <div className="calendar calendar-readonly" role="grid">
               <div className="calendar-head" role="row">

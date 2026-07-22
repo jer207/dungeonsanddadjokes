@@ -36,7 +36,18 @@ export default function App() {
 
   useEffect(() => {
     refresh()
-      .catch((e) => setError(e.message || 'Failed to load'))
+      .catch((e) => {
+        const msg = String(e && e.message)
+        if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+          setError(
+            "Couldn't reach the scheduler. If you're the DM: open your Apps Script " +
+              'URL directly — if it shows a Google sign-in instead of data, redeploy the ' +
+              'Web App with "Who has access: Anyone".',
+          )
+        } else {
+          setError(msg || 'Failed to load')
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -138,11 +149,34 @@ export default function App() {
     }
   }
 
+  // Return to a blank name field (used by both "Log out" and the DM's
+  // "add my own availability" button, which drops the DM into the player flow).
+  function resetToNameEntry() {
+    setDmMode(false)
+    setName('')
+    setSelections({})
+    setNameDone(false)
+    setCalendarDone(false)
+    setError(null)
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
+  }
+
   const totalPlayers = data.players.length
 
   return (
     <div className={`app ${dmMode ? 'dm-mode' : ''}`}>
       <Header />
+
+      {nameDone && (
+        <div className="identity-bar">
+          <span className="identity-label">
+            {dmMode ? 'Dungeon Master' : `Playing as ${name}`}
+          </span>
+          <button type="button" className="logout-btn" onClick={resetToNameEntry}>
+            Log out
+          </button>
+        </div>
+      )}
 
       {!isConfigured() && (
         <div className="demo-banner">
@@ -192,6 +226,7 @@ export default function App() {
             submissions={data.submissions}
             onSaveRange={handleSaveRange}
             onPurge={handlePurge}
+            onJoinAsPlayer={resetToNameEntry}
             busy={dmBusy}
           />
         )}
